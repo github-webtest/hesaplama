@@ -349,7 +349,6 @@
       document.getElementById(id).style.display = 'block';
       document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
       document.querySelector(`[id=link${id.replace("Page","")}]`).classList.add('active');
-      document.querySelector(`[id=link${id.replace("Page","")}]`).style.backgroundColor = "#4caf50";
     }
 
     document.getElementById('linkHome').onclick = () => sayfaGoster('homePage');
