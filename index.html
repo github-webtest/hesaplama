@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Bakiye Hesaplama</title>
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background-color: #121212;
+      color: #fff;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #1f1f1f;
+      padding: 15px;
+      text-align: center;
+      font-size: 22px;
+      font-weight: bold;
+      color: #4caf50;
+      border-bottom: 2px solid #333;
+    }
+    nav {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      background-color: #1a1a1a;
+      border-bottom: 1px solid #333;
+    }
+    nav a {
+      color: #bbb;
+      text-decoration: none;
+      padding: 14px 20px;
+      display: block;
+      transition: 0.3s;
+      font-size: 15px;
+    }
+    nav a:hover, nav a.active {
+      color: #4caf50;
+    }
+    main {
+      padding: 15px;
+    }
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      min-width: 600px;
+    }
+    th, td {
+      border: 1px solid #333;
+      padding: 10px;
+      text-align: center;
+      white-space: nowrap;
+    }
+    th {
+      background-color: #222;
+    }
+    tr:hover {
+      background-color: #1f1f1f;
+    }
+    #fab {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background-color: #4caf50;
+      color: #fff;
+      font-size: 36px;
+      border: none;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    #fab:hover {
+      background-color: #66bb6a;
+    }
+    #panel {
+      position: fixed;
+      bottom: -400px;
+      left: 0;
+      width: 100%;
+      background-color: #1c1c1c;
+      padding: 20px;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.5);
+      border-top-left-radius: 15px;
+      border-top-right-radius: 15px;
+      transition: bottom 0.4s;
+    }
+    #panel.active {
+      bottom: 0;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      background-color: #2a2a2a;
+      color: white;
+      border: 1px solid #444;
+      border-radius: 5px;
+    }
+    button {
+      background-color: #4caf50;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    button:hover {
+      background-color: #66bb6a;
+    }
+  </style>
+</head>
+<body>
+
+  <header>Bakiye Hesaplama</header>
+
+  <nav>
+    <a href="#" id="linkHome" class="active">Anasayfa</a>
+    <a href="#" id="linkCompleted">Tamamlanan İşlemler</a>
+    <a href="#" id="linkBackup">Verileri Yedekle</a>
+    <a href="#" id="linkLoad">Verileri Yükle</a>
+  </nav>
+
+  <main>
+    <!-- ANA SAYFA -->
+    <section id="homePage">
+      <div class="table-container">
+        <table id="dataTable">
+          <thead>
+            <tr>
+              <th>Sembol</th>
+              <th>Miktar</th>
+              <th>Alış Fiyatı</th>
+              <th>Komisyon</th>
+              <th>Toplam</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- TAMAMLANAN İŞLEMLER -->
+    <section id="completedPage" style="display:none;">
+      <div class="table-container">
+        <table id="completedTable">
+          <thead>
+            <tr>
+              <th>Sembol</th>
+              <th>Miktar</th>
+              <th>Alış Fiyatı</th>
+              <th>Satış Fiyatı</th>
+              <th>Toplam (Komisyon)</th>
+              <th>Net Kâr/Zarar</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- YEDEKLEME SAYFASI -->
+    <section id="backupPage" style="display:none;">
+      <h3>Verileri Yedekle</h3>
+      <p>Bu işlem mevcut tüm verilerinizi <strong>Hesap_DATA.json</strong> dosyası olarak indirmenizi sağlar.</p>
+      <button id="downloadBackup">Yedek Dosyasını İndir</button>
+    </section>
+
+    <!-- YÜKLEME SAYFASI -->
+    <section id="loadPage" style="display:none;">
+      <h3>Verileri Yükle</h3>
+      <p>Önceden indirdiğiniz <strong>Hesap_DATA.json</strong> dosyasını seçin.</p>
+      <input type="file" id="uploadBackup" accept=".json">
+    </section>
+  </main>
+
+  <button id="fab">+</button>
+
+  <div id="panel">
+    <input type="text" id="hisse" placeholder="Sembol">
+    <input type="number" id="miktar" placeholder="Miktar">
+    <input type="number" id="alis" placeholder="Alış Fiyatı">
+    <input type="number" id="komisyon" placeholder="İşlem Ücreti">
+    <button id="olusturBtn">Oluştur</button>
+  </div>
+
+  <script>
+    const fab = document.getElementById('fab');
+    const panel = document.getElementById('panel');
+    const dataTable = document.querySelector('#dataTable tbody');
+    const completedTable = document.querySelector('#completedTable tbody');
+
+    let islemler = JSON.parse(localStorage.getItem('islemler')) || [];
+    let tamamlanan = JSON.parse(localStorage.getItem('tamamlanan')) || [];
+
+    function kaydet() {
+      localStorage.setItem('islemler', JSON.stringify(islemler));
+      localStorage.setItem('tamamlanan', JSON.stringify(tamamlanan));
+    }
+
+    function tabloGuncelle() {
+      dataTable.innerHTML = '';
+      islemler.forEach((i, index) => {
+        const tr = document.createElement('tr');
+        const toplam = i.miktar * i.alis + i.komisyon;
+        tr.innerHTML = `
+          <td>${i.hisse}</td>
+          <td>${i.miktar}</td>
+          <td>${i.alis}</td>
+          <td>${i.komisyon}</td>
+          <td>${toplam.toFixed(2)}</td>
+        `;
+        tr.onclick = () => duzenleMenu(index);
+        dataTable.appendChild(tr);
+      });
+    }
+
+    function tamamlananGuncelle() {
+      completedTable.innerHTML = '';
+      tamamlanan.forEach(i => {
+        const renk = i.net >= 0 ? 'style="color:#4caf50;font-weight:bold;"' : 'style="color:#ff5252;font-weight:bold;"';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${i.hisse}</td>
+          <td>${i.miktar}</td>
+          <td>${i.alis}</td>
+          <td>${i.satis}</td>
+          <td>${i.toplamKomisyon.toFixed(2)}</td>
+          <td ${renk}>${i.net.toFixed(2)}</td>
+        `;
+        completedTable.appendChild(tr);
+      });
+    }
+
+    function duzenleMenu(index) {
+      const i = islemler[index];
+      const secim = confirm(`${i.hisse} için "Tamamla" mı yoksa "Düzenle" mi yapmak istersin?\nTamamla: OK / Düzenle: İptal`);
+      if (secim) {
+        const satis = parseFloat(prompt('Satış fiyatı:'));
+        const satisKomisyon = parseFloat(prompt('Satış komisyonu:'));
+        if (isNaN(satis) || isNaN(satisKomisyon)) return alert("Geçerli değerler girilmedi!");
+
+        const toplamAlis = i.miktar * i.alis;
+        const toplamSatis = i.miktar * satis;
+        const toplamKomisyon = i.komisyon + satisKomisyon;
+        const net = toplamSatis - toplamAlis - toplamKomisyon;
+
+        tamamlanan.push({ hisse: i.hisse, miktar: i.miktar, alis: i.alis, satis, toplamKomisyon, net });
+        islemler.splice(index, 1);
+      } else {
+        i.hisse = prompt('Sembol:', i.hisse);
+        i.miktar = parseFloat(prompt('Miktar:', i.miktar));
+        i.alis = parseFloat(prompt('Alış fiyatı:', i.alis));
+        i.komisyon = parseFloat(prompt('Komisyon:', i.komisyon));
+      }
+      kaydet();
+      tabloGuncelle();
+      tamamlananGuncelle();
+    }
+
+    fab.onclick = () => panel.classList.toggle('active');
+
+    document.getElementById('olusturBtn').onclick = () => {
+      const hisse = document.getElementById('hisse').value.trim();
+      const miktar = parseFloat(document.getElementById('miktar').value);
+      const alis = parseFloat(document.getElementById('alis').value);
+      const komisyon = parseFloat(document.getElementById('komisyon').value);
+      if (!hisse || !miktar || !alis || isNaN(komisyon)) return alert('Lütfen tüm alanları doldurun!');
+      islemler.push({ hisse, miktar, alis, komisyon });
+      kaydet();
+      panel.classList.remove('active');
+      document.querySelectorAll('#panel input').forEach(i => i.value = '');
+      tabloGuncelle();
+    };
+
+    function sayfaGoster(id) {
+      document.querySelectorAll('main section').forEach(sec => sec.style.display = 'none');
+      document.getElementById(id).style.display = 'block';
+      document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+      document.querySelector(`[id=link${id.replace("Page","")}]`).classList.add('active');
+    }
+
+    document.getElementById('linkHome').onclick = () => sayfaGoster('homePage');
+    document.getElementById('linkCompleted').onclick = () => sayfaGoster('completedPage');
+    document.getElementById('linkBackup').onclick = () => sayfaGoster('backupPage');
+    document.getElementById('linkLoad').onclick = () => sayfaGoster('loadPage');
+
+    document.getElementById('downloadBackup').onclick = () => {
+      const data = { islemler, tamamlanan };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = "Hesap_DATA.json";
+      link.click();
+    };
+
+    document.getElementById('uploadBackup').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        try {
+          const data = JSON.parse(evt.target.result);
+          islemler = data.islemler || [];
+          tamamlanan = data.tamamlanan || [];
+          kaydet();
+          tabloGuncelle();
+          tamamlananGuncelle();
+          alert('Veriler başarıyla yüklendi!');
+        } catch {
+          alert('Geçersiz dosya biçimi!');
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    tabloGuncelle();
+    tamamlananGuncelle();
+  </script>
+
+</body>
+</html>
