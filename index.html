@@ -63,6 +63,7 @@
     }
     tr:hover {
       background-color: #1f1f1f;
+      cursor: pointer;
     }
     #fab {
       position: fixed;
@@ -117,6 +118,45 @@
     button:hover {
       background-color: #66bb6a;
     }
+
+    /* MODAL TASARIMI */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background-color: #1f1f1f;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      width: 280px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    }
+    .modal-content h3 {
+      margin-top: 0;
+      color: #4caf50;
+    }
+    .modal-content button {
+      display: block;
+      width: 100%;
+      margin-top: 10px;
+      padding: 10px;
+      font-size: 16px;
+    }
+    .cancel-btn {
+      background-color: #444;
+    }
+    .cancel-btn:hover {
+      background-color: #666;
+    }
   </style>
 </head>
 <body>
@@ -131,7 +171,6 @@
   </nav>
 
   <main>
-    <!-- ANA SAYFA -->
     <section id="homePage">
       <div class="table-container">
         <table id="dataTable">
@@ -149,7 +188,6 @@
       </div>
     </section>
 
-    <!-- TAMAMLANAN İŞLEMLER -->
     <section id="completedPage" style="display:none;">
       <div class="table-container">
         <table id="completedTable">
@@ -168,14 +206,12 @@
       </div>
     </section>
 
-    <!-- YEDEKLEME SAYFASI -->
     <section id="backupPage" style="display:none;">
       <h3>Verileri Yedekle</h3>
       <p>Bu işlem mevcut tüm verilerinizi <strong>Hesap_DATA.json</strong> dosyası olarak indirmenizi sağlar.</p>
       <button id="downloadBackup">Yedek Dosyasını İndir</button>
     </section>
 
-    <!-- YÜKLEME SAYFASI -->
     <section id="loadPage" style="display:none;">
       <h3>Verileri Yükle</h3>
       <p>Önceden indirdiğiniz <strong>Hesap_DATA.json</strong> dosyasını seçin.</p>
@@ -193,14 +229,29 @@
     <button id="olusturBtn">Oluştur</button>
   </div>
 
+  <!-- MODAL -->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <h3>İşlem Seçin</h3>
+      <button id="editBtn">Düzenle</button>
+      <button id="completeBtn">Tamamla</button>
+      <button class="cancel-btn" id="cancelBtn">İptal</button>
+    </div>
+  </div>
+
   <script>
     const fab = document.getElementById('fab');
     const panel = document.getElementById('panel');
     const dataTable = document.querySelector('#dataTable tbody');
     const completedTable = document.querySelector('#completedTable tbody');
+    const modal = document.getElementById('modal');
+    const editBtn = document.getElementById('editBtn');
+    const completeBtn = document.getElementById('completeBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
 
     let islemler = JSON.parse(localStorage.getItem('islemler')) || [];
     let tamamlanan = JSON.parse(localStorage.getItem('tamamlanan')) || [];
+    let secilenIndex = null;
 
     function kaydet() {
       localStorage.setItem('islemler', JSON.stringify(islemler));
@@ -219,7 +270,7 @@
           <td>${i.komisyon}</td>
           <td>${toplam.toFixed(2)}</td>
         `;
-        tr.onclick = () => duzenleMenu(index);
+        tr.onclick = () => acModal(index);
         dataTable.appendChild(tr);
       });
     }
@@ -241,31 +292,39 @@
       });
     }
 
-    function duzenleMenu(index) {
-      const i = islemler[index];
-      const secim = confirm(`${i.hisse} için "Tamamla" mı yoksa "Düzenle" mi yapmak istersin?\nTamamla: OK / Düzenle: İptal`);
-      if (secim) {
-        const satis = parseFloat(prompt('Satış fiyatı:'));
-        const satisKomisyon = parseFloat(prompt('Satış komisyonu:'));
-        if (isNaN(satis) || isNaN(satisKomisyon)) return alert("Geçerli değerler girilmedi!");
+    function acModal(index) {
+      secilenIndex = index;
+      modal.style.display = "flex";
+    }
+    cancelBtn.onclick = () => modal.style.display = "none";
 
-        const toplamAlis = i.miktar * i.alis;
-        const toplamSatis = i.miktar * satis;
-        const toplamKomisyon = i.komisyon + satisKomisyon;
-        const net = toplamSatis - toplamAlis - toplamKomisyon;
+    editBtn.onclick = () => {
+      const i = islemler[secilenIndex];
+      i.hisse = prompt('Sembol:', i.hisse);
+      i.miktar = parseFloat(prompt('Miktar:', i.miktar));
+      i.alis = parseFloat(prompt('Alış fiyatı:', i.alis));
+      i.komisyon = parseFloat(prompt('Komisyon:', i.komisyon));
+      kaydet();
+      tabloGuncelle();
+      modal.style.display = "none";
+    };
 
-        tamamlanan.push({ hisse: i.hisse, miktar: i.miktar, alis: i.alis, satis, toplamKomisyon, net });
-        islemler.splice(index, 1);
-      } else {
-        i.hisse = prompt('Sembol:', i.hisse);
-        i.miktar = parseFloat(prompt('Miktar:', i.miktar));
-        i.alis = parseFloat(prompt('Alış fiyatı:', i.alis));
-        i.komisyon = parseFloat(prompt('Komisyon:', i.komisyon));
-      }
+    completeBtn.onclick = () => {
+      const i = islemler[secilenIndex];
+      const satis = parseFloat(prompt('Satış fiyatı:'));
+      const satisKomisyon = parseFloat(prompt('Satış komisyonu:'));
+      if (isNaN(satis) || isNaN(satisKomisyon)) return alert("Geçerli değer girilmedi!");
+      const toplamAlis = i.miktar * i.alis;
+      const toplamSatis = i.miktar * satis;
+      const toplamKomisyon = i.komisyon + satisKomisyon;
+      const net = toplamSatis - toplamAlis - toplamKomisyon;
+      tamamlanan.push({ hisse: i.hisse, miktar: i.miktar, alis: i.alis, satis, toplamKomisyon, net });
+      islemler.splice(secilenIndex, 1);
       kaydet();
       tabloGuncelle();
       tamamlananGuncelle();
-    }
+      modal.style.display = "none";
+    };
 
     fab.onclick = () => panel.classList.toggle('active');
 
@@ -326,6 +385,5 @@
     tabloGuncelle();
     tamamlananGuncelle();
   </script>
-
 </body>
 </html>
