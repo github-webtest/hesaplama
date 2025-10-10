@@ -53,7 +53,7 @@
       width: 100%;
       border-collapse: collapse;
       margin-top: 15px;
-      min-width: 600px;
+      min-width: 700px;
     }
     th, td {
       border: 1px solid #333;
@@ -202,6 +202,8 @@
               <th>Satış Fiyatı</th>
               <th>Toplam (Komisyon)</th>
               <th>Net Kâr/Zarar</th>
+              <th>ROI (%)</th>
+              <th>Toplam Bakiye</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -282,6 +284,9 @@
       completedTable.innerHTML = '';
       tamamlanan.forEach(i => {
         const renk = i.net >= 0 ? 'style="color:#4caf50;font-weight:bold;"' : 'style="color:#ff5252;font-weight:bold;"';
+        const toplamAlis = i.miktar * i.alis;
+        const roi = ((i.net / toplamAlis) * 100).toFixed(2);
+        const toplamBakiye = (i.miktar * i.satis - i.toplamKomisyon).toFixed(2);
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${i.hisse}</td>
@@ -290,6 +295,8 @@
           <td>${i.satis}</td>
           <td>${i.toplamKomisyon.toFixed(2)}</td>
           <td ${renk}>${i.net.toFixed(2)}</td>
+          <td>${roi}%</td>
+          <td>${toplamBakiye}</td>
         `;
         completedTable.appendChild(tr);
       });
