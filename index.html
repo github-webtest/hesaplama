@@ -53,7 +53,7 @@
       width: 100%;
       border-collapse: collapse;
       margin-top: 15px;
-      min-width: 700px;
+      min-width: 800px;
     }
     th, td {
       border: 1px solid #333;
@@ -87,7 +87,7 @@
     }
     #panel {
       position: fixed;
-      bottom: -400px;
+      bottom: -450px;
       left: 0;
       width: 100%;
       background-color: #1c1c1c;
@@ -122,7 +122,7 @@
       background-color: #66bb6a;
     }
 
-    /* MODAL TASARIMI */
+    /* MODAL */
     .modal {
       display: none;
       position: fixed;
@@ -183,6 +183,7 @@
               <th>Miktar</th>
               <th>Alış Fiyatı</th>
               <th>Komisyon</th>
+              <th>Mevcut Nakit</th>
               <th>Toplam</th>
             </tr>
           </thead>
@@ -203,7 +204,7 @@
               <th>Toplam (Komisyon)</th>
               <th>Net Kâr/Zarar</th>
               <th>ROI (%)</th>
-              <th>Toplam Bakiye</th>
+              <th>Toplam Bakiye (Nakit Dahil)</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -213,7 +214,7 @@
 
     <section id="backupPage" style="display:none;">
       <h3>Verileri Yedekle</h3>
-      <p>Bu işlem mevcut tüm verilerinizi <strong>Hesap_DATA.json</strong> dosyası olarak indirmenizi sağlar.</p>
+      <p>Tüm veriler <strong>Hesap_DATA.json</strong> dosyası olarak indirilecektir.</p>
       <button id="downloadBackup">Yedek Dosyasını İndir</button>
     </section>
 
@@ -231,10 +232,10 @@
     <input type="number" id="miktar" placeholder="Miktar">
     <input type="number" id="alis" placeholder="Alış Fiyatı">
     <input type="number" id="komisyon" placeholder="İşlem Ücreti">
+    <input type="number" id="nakit" placeholder="Mevcut Nakit">
     <button id="olusturBtn">Oluştur</button>
   </div>
 
-  <!-- MODAL -->
   <div id="modal" class="modal">
     <div class="modal-content">
       <h3>İşlem Seçin</h3>
@@ -266,13 +267,14 @@
     function tabloGuncelle() {
       dataTable.innerHTML = '';
       islemler.forEach((i, index) => {
-        const tr = document.createElement('tr');
         const toplam = i.miktar * i.alis + i.komisyon;
+        const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${i.hisse}</td>
           <td>${i.miktar}</td>
           <td>${i.alis}</td>
           <td>${i.komisyon}</td>
+          <td>${i.nakit || 0}</td>
           <td>${toplam.toFixed(2)}</td>
         `;
         tr.onclick = () => acModal(index);
@@ -286,7 +288,7 @@
         const renk = i.net >= 0 ? 'style="color:#4caf50;font-weight:bold;"' : 'style="color:#ff5252;font-weight:bold;"';
         const toplamAlis = i.miktar * i.alis;
         const roi = ((i.net / toplamAlis) * 100).toFixed(2);
-        const toplamBakiye = (i.miktar * i.satis - i.toplamKomisyon).toFixed(2);
+        const toplamBakiye = (i.miktar * i.satis - i.toplamKomisyon + i.nakit).toFixed(2);
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${i.hisse}</td>
@@ -314,6 +316,7 @@
       i.miktar = parseFloat(prompt('Miktar:', i.miktar));
       i.alis = parseFloat(prompt('Alış fiyatı:', i.alis));
       i.komisyon = parseFloat(prompt('Komisyon:', i.komisyon));
+      i.nakit = parseFloat(prompt('Mevcut Nakit:', i.nakit || 0));
       kaydet();
       tabloGuncelle();
       modal.style.display = "none";
@@ -328,7 +331,7 @@
       const toplamSatis = i.miktar * satis;
       const toplamKomisyon = i.komisyon + satisKomisyon;
       const net = toplamSatis - toplamAlis - toplamKomisyon;
-      tamamlanan.push({ hisse: i.hisse, miktar: i.miktar, alis: i.alis, satis, toplamKomisyon, net });
+      tamamlanan.push({ hisse: i.hisse, miktar: i.miktar, alis: i.alis, satis, toplamKomisyon, net, nakit: i.nakit || 0 });
       islemler.splice(secilenIndex, 1);
       kaydet();
       tabloGuncelle();
@@ -343,8 +346,9 @@
       const miktar = parseFloat(document.getElementById('miktar').value);
       const alis = parseFloat(document.getElementById('alis').value);
       const komisyon = parseFloat(document.getElementById('komisyon').value);
+      const nakit = parseFloat(document.getElementById('nakit').value) || 0;
       if (!hisse || !miktar || !alis || isNaN(komisyon)) return alert('Lütfen tüm alanları doldurun!');
-      islemler.push({ hisse, miktar, alis, komisyon });
+      islemler.push({ hisse, miktar, alis, komisyon, nakit });
       kaydet();
       panel.classList.remove('active');
       document.querySelectorAll('#panel input').forEach(i => i.value = '');
