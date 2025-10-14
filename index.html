@@ -122,7 +122,6 @@
       background-color: #66bb6a;
     }
 
-    /* MODAL */
     .modal {
       display: none;
       position: fixed;
@@ -322,17 +321,40 @@
       modal.style.display = "none";
     };
 
+    // 🔹 KISMİ SATIŞ SİSTEMİ 🔹
     completeBtn.onclick = () => {
       const i = islemler[secilenIndex];
+      const satisAdet = parseFloat(prompt(`Satış adedi (max ${i.miktar}):`));
+      if (isNaN(satisAdet) || satisAdet <= 0) return alert("Geçerli bir adet girin!");
+      if (satisAdet > i.miktar) return alert("Satış adedi, mevcut adetten fazla olamaz!");
+
       const satis = parseFloat(prompt('Satış fiyatı:'));
       const satisKomisyon = parseFloat(prompt('Satış komisyonu:'));
       if (isNaN(satis) || isNaN(satisKomisyon)) return alert("Geçerli değer girilmedi!");
-      const toplamAlis = i.miktar * i.alis;
-      const toplamSatis = i.miktar * satis;
-      const toplamKomisyon = i.komisyon + satisKomisyon;
-      const net = toplamSatis - toplamAlis - toplamKomisyon;
-      tamamlanan.push({ hisse: i.hisse, miktar: i.miktar, alis: i.alis, satis, toplamKomisyon, net, nakit: i.nakit || 0 });
-      islemler.splice(secilenIndex, 1);
+
+      const oran = satisAdet / i.miktar;
+      const alisToplam = i.miktar * i.alis;
+      const alisKismi = alisToplam * oran;
+      const alisKomisyonKismi = i.komisyon * oran;
+      const toplamKomisyon = alisKomisyonKismi + satisKomisyon;
+
+      const satisToplam = satisAdet * satis;
+      const net = satisToplam - alisKismi - toplamKomisyon;
+
+      tamamlanan.push({
+        hisse: i.hisse,
+        miktar: satisAdet,
+        alis: i.alis,
+        satis,
+        toplamKomisyon,
+        net,
+        nakit: i.nakit || 0
+      });
+
+      i.miktar -= satisAdet;
+      i.komisyon -= alisKomisyonKismi;
+      if (i.miktar <= 0.000001) islemler.splice(secilenIndex, 1);
+
       kaydet();
       tabloGuncelle();
       tamamlananGuncelle();
