@@ -24,6 +24,47 @@
       color: #4caf50;
       border-bottom: 2px solid #333;
     }
+    #nakitContainer {
+      background-color: #1a1a1a;
+      text-align: center;
+      padding: 10px;
+      border-bottom: 1px solid #333;
+    }
+    #nakitContainer input {
+      width: 150px;
+      padding: 8px;
+      background-color: #2a2a2a;
+      color: #fff;
+      border: 1px solid #444;
+      border-radius: 5px;
+      text-align: right;
+      font-size: 16px;
+    }
+    #nakitContainer label {
+      margin-right: 10px;
+      font-weight: bold;
+      color: #4caf50;
+    }
+    #sonSatisContainer {
+      margin-top: 8px;
+      color: #bbb;
+    }
+    #sonSatisContainer label {
+      color: #4caf50;
+      font-weight: bold;
+    }
+    #sonSatisContainer button {
+      margin-left: 10px;
+      background-color: #444;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 4px 8px;
+      cursor: pointer;
+    }
+    #sonSatisContainer button:hover {
+      background-color: #666;
+    }
     nav {
       display: flex;
       justify-content: center;
@@ -69,18 +110,21 @@
       cursor: pointer;
     }
     #fab {
+      width: 60px;
+      height: 60px;
       position: fixed;
       bottom: 20px;
       right: 20px;
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
+      border-radius: 100%;
       background-color: #4caf50;
       color: #fff;
       font-size: 36px;
       border: none;
       cursor: pointer;
-      transition: 0.3s;
+      box-sizing: border-box;
+      float: left;
+      text-align: center;
+      line-height: 55px;
     }
     #fab:hover {
       background-color: #66bb6a;
@@ -99,6 +143,9 @@
     }
     #panel.active {
       bottom: 0;
+    }
+    input, button {
+      font-family: inherit;
     }
     input {
       width: 100%;
@@ -121,7 +168,6 @@
     button:hover {
       background-color: #66bb6a;
     }
-
     .modal {
       display: none;
       position: fixed;
@@ -165,6 +211,17 @@
 
   <header>Bakiye Hesaplama</header>
 
+  <div id="nakitContainer">
+    <label for="mevcutNakit">Mevcut Nakit:</label>
+    <input type="number" id="mevcutNakit" placeholder="0.00">
+  </div>
+
+  <div id="sonSatisContainer">
+    <label>Son Satış Nakiti:</label>
+    <span id="sonSatisNakit">-</span>
+    <button id="temizleSonSatis">Sil</button>
+  </div>
+
   <nav>
     <a href="#" id="linkHome" class="active">Anasayfa</a>
     <a href="#" id="linkCompleted">Tamamlanan İşlemler</a>
@@ -182,8 +239,7 @@
               <th>Miktar</th>
               <th>Alış Fiyatı</th>
               <th>Komisyon</th>
-              <th>Mevcut Nakit</th>
-              <th>Toplam (Hisse)</th>
+              <th>Toplam Ödeme</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -203,7 +259,6 @@
               <th>Toplam (Komisyon)</th>
               <th>Net Kâr/Zarar</th>
               <th>ROI (%)</th>
-              <th>Toplam Bakiye (Nakit Dahil)</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -220,18 +275,17 @@
     <section id="loadPage" style="display:none;">
       <h3>Verileri Yükle</h3>
       <p>Önceden indirdiğiniz <strong>Hesap_DATA.json</strong> dosyasını seçin.</p>
-      <input type="file" id="uploadBackup" accept=".json">
+      <input style="width: 90%;" type="file" id="uploadBackup" accept=".json">
     </section>
   </main>
 
-  <button id="fab">+</button>
+  <div id="fab">+</div>
 
   <div id="panel">
     <input type="text" id="hisse" placeholder="Sembol">
     <input type="number" id="miktar" placeholder="Miktar">
     <input type="number" id="alis" placeholder="Alış Fiyatı">
     <input type="number" id="komisyon" placeholder="İşlem Ücreti">
-    <input type="number" id="nakit" placeholder="Mevcut Nakit">
     <button id="olusturBtn">Oluştur</button>
   </div>
 
@@ -253,10 +307,31 @@
     const editBtn = document.getElementById('editBtn');
     const completeBtn = document.getElementById('completeBtn');
     const cancelBtn = document.getElementById('cancelBtn');
+    const nakitInput = document.getElementById('mevcutNakit');
+    const sonSatisNakitSpan = document.getElementById('sonSatisNakit');
+    const temizleSonSatisBtn = document.getElementById('temizleSonSatis');
 
     let islemler = JSON.parse(localStorage.getItem('islemler')) || [];
     let tamamlanan = JSON.parse(localStorage.getItem('tamamlanan')) || [];
+    let mevcutNakit = parseFloat(localStorage.getItem('mevcutNakit')) || 0;
     let secilenIndex = null;
+    let sonSatisNakit = parseFloat(localStorage.getItem('sonSatisNakit')) || null;
+
+    nakitInput.value = mevcutNakit.toFixed(2);
+    if (sonSatisNakit !== null) sonSatisNakitSpan.textContent = sonSatisNakit.toFixed(2);
+
+    nakitInput.addEventListener('input', () => {
+      mevcutNakit = parseFloat(nakitInput.value) || 0;
+      localStorage.setItem('mevcutNakit', mevcutNakit);
+    });
+
+    temizleSonSatisBtn.onclick = () => {
+      if (confirm("Son satış nakiti bilgisini silmek istiyor musunuz?")) {
+        sonSatisNakit = null;
+        localStorage.removeItem('sonSatisNakit');
+        sonSatisNakitSpan.textContent = "-";
+      }
+    };
 
     function kaydet() {
       localStorage.setItem('islemler', JSON.stringify(islemler));
@@ -273,7 +348,6 @@
           <td>${i.miktar}</td>
           <td>${i.alis}</td>
           <td>${i.komisyon.toFixed(2)}</td>
-          <td>${i.nakit || 0}</td>
           <td>${toplam.toFixed(2)}</td>
         `;
         tr.onclick = () => acModal(index);
@@ -283,11 +357,10 @@
 
     function tamamlananGuncelle() {
       completedTable.innerHTML = '';
-      tamamlanan.forEach(i => {
+      tamamlanan.forEach((i, index) => {
         const renk = i.net >= 0 ? 'style="color:#4caf50;font-weight:bold;"' : 'style="color:#ff5252;font-weight:bold;"';
         const toplamAlis = i.miktar * i.alis;
         const roi = ((i.net / toplamAlis) * 100).toFixed(2);
-        const toplamBakiye = (i.miktar * i.satis - i.toplamKomisyon + i.nakit).toFixed(2);
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${i.hisse}</td>
@@ -297,8 +370,14 @@
           <td>${i.toplamKomisyon.toFixed(2)}</td>
           <td ${renk}>${i.net.toFixed(2)}</td>
           <td>${roi}%</td>
-          <td>${toplamBakiye}</td>
         `;
+        tr.onclick = () => {
+          if (confirm(`${i.hisse} işlemini silmek istiyor musunuz?`)) {
+            tamamlanan.splice(index, 1);
+            kaydet();
+            tamamlananGuncelle();
+          }
+        };
         completedTable.appendChild(tr);
       });
     }
@@ -315,51 +394,53 @@
       i.miktar = parseFloat(prompt('Miktar:', i.miktar));
       i.alis = parseFloat(prompt('Alış fiyatı:', i.alis));
       i.komisyon = parseFloat(prompt('Komisyon:', i.komisyon));
-      i.nakit = parseFloat(prompt('Mevcut Nakit:', i.nakit || 0));
       kaydet();
       tabloGuncelle();
       modal.style.display = "none";
     };
 
-    // 🔹 KISMİ SATIŞ SİSTEMİ 🔹
     completeBtn.onclick = () => {
-      const i = islemler[secilenIndex];
-      const satisAdet = parseFloat(prompt(`Satış adedi (max ${i.miktar}):`));
-      if (isNaN(satisAdet) || satisAdet <= 0) return alert("Geçerli bir adet girin!");
-      if (satisAdet > i.miktar) return alert("Satış adedi, mevcut adetten fazla olamaz!");
+  const i = islemler[secilenIndex];
+  const satisAdet = parseFloat(prompt(`Satış adedi (max ${i.miktar}):`));
+  if (isNaN(satisAdet) || satisAdet <= 0) return alert("Geçerli bir adet girin!");
+  if (satisAdet > i.miktar) return alert("Satış adedi, mevcut adetten fazla olamaz!");
 
-      const satis = parseFloat(prompt('Satış fiyatı:'));
-      const satisKomisyon = parseFloat(prompt('Satış komisyonu:'));
-      if (isNaN(satis) || isNaN(satisKomisyon)) return alert("Geçerli değer girilmedi!");
+  const satis = parseFloat(prompt('Satış fiyatı:'));
+  const satisKomisyon = parseFloat(prompt('Satış komisyonu:'));
+  if (isNaN(satis) || isNaN(satisKomisyon)) return alert("Geçerli değer girilmedi!");
 
-      const oran = satisAdet / i.miktar;
-      const alisToplam = i.miktar * i.alis;
-      const alisKismi = alisToplam * oran;
-      const alisKomisyonKismi = i.komisyon * oran;
-      const toplamKomisyon = alisKomisyonKismi + satisKomisyon;
+  const oran = satisAdet / i.miktar;
+  const alisKismi = i.alis * satisAdet;           // 🔹 Alınan kısmın maliyeti
+  const alisKomisyonKismi = i.komisyon * oran;   // 🔹 Alış komisyonunun satılan kısma düşeni
+  const toplamKomisyon = alisKomisyonKismi + satisKomisyon;  // 🔹 Toplam komisyon
 
-      const satisToplam = satisAdet * satis;
-      const net = satisToplam - alisKismi - toplamKomisyon;
+  const sonSatisNakitDegeri = (satisAdet * satis) - toplamKomisyon; // 🔹 Son satış nakiti
+  const net = (satisAdet * satis) - alisKismi - toplamKomisyon;      // 🔹 Net kâr/zarar
 
-      tamamlanan.push({
-        hisse: i.hisse,
-        miktar: satisAdet,
-        alis: i.alis,
-        satis,
-        toplamKomisyon,
-        net,
-        nakit: i.nakit || 0
-      });
+  tamamlanan.push({
+    hisse: i.hisse,
+    miktar: satisAdet,
+    alis: i.alis,
+    satis,
+    toplamKomisyon,
+    net
+  });
 
-      i.miktar -= satisAdet;
-      i.komisyon -= alisKomisyonKismi;
-      if (i.miktar <= 0.000001) islemler.splice(secilenIndex, 1);
+  i.miktar -= satisAdet;
+  i.komisyon -= alisKomisyonKismi;
+  if (i.miktar <= 0.000001) islemler.splice(secilenIndex, 1);
 
-      kaydet();
-      tabloGuncelle();
-      tamamlananGuncelle();
-      modal.style.display = "none";
-    };
+  // 🔹 Son satış nakiti güncelle
+  sonSatisNakit = sonSatisNakitDegeri;
+  localStorage.setItem('sonSatisNakit', sonSatisNakit);
+  sonSatisNakitSpan.textContent = sonSatisNakit.toFixed(2);
+
+  kaydet();
+  tabloGuncelle();
+  tamamlananGuncelle();
+  modal.style.display = "none";
+};
+
 
     fab.onclick = () => panel.classList.toggle('active');
 
@@ -368,9 +449,8 @@
       const miktar = parseFloat(document.getElementById('miktar').value);
       const alis = parseFloat(document.getElementById('alis').value);
       const komisyon = parseFloat(document.getElementById('komisyon').value);
-      const nakit = parseFloat(document.getElementById('nakit').value) || 0;
       if (!hisse || !miktar || !alis || isNaN(komisyon)) return alert('Lütfen tüm alanları doldurun!');
-      islemler.push({ hisse, miktar, alis, komisyon, nakit });
+      islemler.push({ hisse, miktar, alis, komisyon });
       kaydet();
       panel.classList.remove('active');
       document.querySelectorAll('#panel input').forEach(i => i.value = '');
@@ -390,29 +470,33 @@
     document.getElementById('linkLoad').onclick = () => sayfaGoster('loadPage');
 
     document.getElementById('downloadBackup').onclick = () => {
-      const data = { islemler, tamamlanan };
+      const data = { islemler, tamamlanan, mevcutNakit, sonSatisNakit };
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
-      link.download = "Hesap_DATA.json";
+      link.download = 'Hesap_DATA.json';
       link.click();
     };
 
-    document.getElementById('uploadBackup').addEventListener('change', function(e) {
+    document.getElementById('uploadBackup').addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = function(evt) {
+      reader.onload = (ev) => {
         try {
-          const data = JSON.parse(evt.target.result);
+          const data = JSON.parse(ev.target.result);
           islemler = data.islemler || [];
           tamamlanan = data.tamamlanan || [];
+          mevcutNakit = data.mevcutNakit || 0;
+          nakitInput.value = mevcutNakit.toFixed(2);
+          sonSatisNakit = data.sonSatisNakit || null;
+          sonSatisNakitSpan.textContent = sonSatisNakit !== null ? sonSatisNakit.toFixed(2) : "-";
           kaydet();
           tabloGuncelle();
           tamamlananGuncelle();
-          alert('Veriler başarıyla yüklendi!');
-        } catch {
-          alert('Geçersiz dosya biçimi!');
+          alert("Veriler başarıyla yüklendi!");
+        } catch(err) {
+          alert("Geçersiz dosya!");
         }
       };
       reader.readAsText(file);
