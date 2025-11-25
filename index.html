@@ -414,7 +414,7 @@
   const alisKomisyonKismi = i.komisyon * oran;   // 🔹 Alış komisyonunun satılan kısma düşeni
   const toplamKomisyon = alisKomisyonKismi + satisKomisyon;  // 🔹 Toplam komisyon
 
-  const sonSatisNakitDegeri = (satisAdet * satis) - toplamKomisyon; // 🔹 Son satış nakiti
+  const sonSatisNakitDegeri = (satisAdet * satis) - satisKomisyon; // 🔹 Son satış nakiti
   const net = (satisAdet * satis) - alisKismi - toplamKomisyon;      // 🔹 Net kâr/zarar
 
   tamamlanan.push({
